@@ -2,4 +2,17 @@
     log("clicked");
 }
 
-Ui.Button({ text: 'text', onClick: onClick });
+Ui.Element(
+    {
+        name: "button",
+        props: {
+            children: [
+                {
+                    name: "text",
+                    props: {
+                        children: ["Hello world"]
+                    }
+                }]
+        }
+    }
+);

@@ -1,35 +1,56 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+using ElementData = System.Collections.Generic.List<System.Collections.Generic.IDictionary<string, object>>;
+
 namespace Reunity.Ui
 {
-    public class ButtonElement
+    public class ButtonElement : Element
     {
-        private readonly string text;
-        private Action<object> onClick;
 
-        public ButtonElement(string text, Action<object> onClick)
+        private struct Props
         {
-            this.text = text;
-            this.onClick = onClick;
+            public ElementData Children;
+
+            public Props(ElementData children)
+            {
+                Children = children;
+            }
         }
 
-        public GameObject ToGameObject(Transform parent)
+        private Props ParseProps(IDictionary<string, object> propsDict)
         {
-            TextElement textEl = new TextElement(text);
+            ElementData children = new ElementData();
+
+            if (propsDict.TryGetValue("children", out object childrenObject))
+            {
+                foreach (object child in (object[])childrenObject)
+                {
+                    IDictionary<string, object> childData = (IDictionary<string, object>)child;
+                    children.Add((IDictionary<string, object>)child);
+                }
+            }
+
+            return new Props(children);
+        }
+
+        public override GameObject Render(Transform parent, IDictionary<string, object> propsDict)
+        {
+            Props props = ParseProps(propsDict);
 
             GameObject buttonInstance = new GameObject("Button");
             buttonInstance.AddComponent<Button>();
             buttonInstance.AddComponent<RectTransform>();
             buttonInstance.AddComponent<Image>();
-
-            buttonInstance.GetComponent<Button>().onClick.AddListener(() => onClick(null));
-
             buttonInstance.GetComponent<Transform>().SetParent(parent);
             buttonInstance.GetComponent<Transform>().localPosition = Vector3.zero;
 
-            textEl.ToGameObject(buttonInstance.transform);
+            foreach (IDictionary<string, object> child in props.Children)
+            {
+                Elements.Render(buttonInstance.transform, child);
+            }
 
             return buttonInstance;
         }
